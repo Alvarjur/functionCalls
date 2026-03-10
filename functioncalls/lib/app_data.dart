@@ -52,7 +52,7 @@ class AppData extends ChangeNotifier {
 
       request.headers.addAll({'Content-Type': 'application/json'});
       request.body =
-          jsonEncode({'model': 'llama3.2', 'prompt': question, 'stream': true});
+          jsonEncode({'model': 'llama3.2:1b', 'prompt': question, 'stream': true});
 
       var streamedResponse = await _client!.send(request);
       _streamSubscription =
@@ -119,7 +119,7 @@ class AppData extends ChangeNotifier {
     setLoading(true);
 
     final body = {
-      "model": "llama3.2",
+      "model": "llama3.2:1b",
       "stream": false,
       "messages": [
         {"role": "user", "content": userPrompt}
@@ -179,6 +179,30 @@ class AppData extends ChangeNotifier {
     return 0.0;
   }
 
+  Color parseColor(String? colorName) {
+    if (colorName == null) return Colors.black;
+    final colorMap = {
+      'red': Colors.red,
+      'blue': Colors.blue,
+      'green': Colors.green,
+      'yellow': Colors.yellow,
+      'black': Colors.black,
+      'white': Colors.white,
+      'orange': Colors.orange,
+      'purple': Colors.purple,
+      'pink': Colors.pink,
+      'brown': Colors.brown,
+      'grey': Colors.grey,
+      'cyan': Colors.cyan,
+      'magenta': Colors.pink,
+      'lime': Colors.lime,
+      'teal': Colors.teal,
+      'indigo': Colors.indigo,
+      'amber': Colors.amber,
+    };
+    return colorMap[colorName.toLowerCase()] ?? Colors.black;
+  }
+
   void _processFunctionCall(Map<String, dynamic> functionCall) {
     final fixedJson = fixJsonInStrings(functionCall);
     final parameters = fixedJson['arguments'];
@@ -197,7 +221,8 @@ class AppData extends ChangeNotifier {
           final dx = parseDouble(parameters['x']);
           final dy = parseDouble(parameters['y']);
           final radius = max(0.0, parseDouble(parameters['radius']));
-          addDrawable(Circle(center: Offset(dx, dy), radius: radius));
+          final color = parseColor(parameters['color']);
+          addDrawable(Circle(center: Offset(dx, dy), radius: radius, color: color));
         } else {
           print("Missing circle properties: $parameters");
         }
@@ -214,7 +239,8 @@ class AppData extends ChangeNotifier {
           final endY = parseDouble(parameters['endY']);
           final start = Offset(startX, startY);
           final end = Offset(endX, endY);
-          addDrawable(Line(start: start, end: end));
+          final color = parseColor(parameters['color']);
+          addDrawable(Line(start: start, end: end, color: color));
         } else {
           print("Missing line properties: $parameters");
         }
@@ -231,7 +257,8 @@ class AppData extends ChangeNotifier {
           final bottomRightY = parseDouble(parameters['bottomRightY']);
           final topLeft = Offset(topLeftX, topLeftY);
           final bottomRight = Offset(bottomRightX, bottomRightY);
-          addDrawable(Rectangle(topLeft: topLeft, bottomRight: bottomRight));
+          final color = parseColor(parameters['color']);
+          addDrawable(Rectangle(topLeft: topLeft, bottomRight: bottomRight, color: color));
         } else {
           print("Missing rectangle properties: $parameters");
         }

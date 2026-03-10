@@ -20,7 +20,7 @@ class AppState extends State<App> {
       debugShowCheckedModeBanner: false,
       theme: CupertinoThemeData(brightness: Brightness.light),
       home: CDKApp(
-          defaultAppearance: "system", // system, light, dark
+          defaultAppearance: CDKThemeAppearance.system, // system, light, dark
           defaultColor: "systemBlue",
           child: Layout(title: "Func call demo")),
     );
