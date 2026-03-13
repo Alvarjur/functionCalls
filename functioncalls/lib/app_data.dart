@@ -12,6 +12,8 @@ const streamingModel = 'granite4:3b';
 const functionCallingModel = 'granite4:3b';
 const jsonFixModel = 'granite4:3b';
 
+// Funcionamiento de pasar el tamaño del canvas, cambiar el color, el radio, etc.
+
 class AppData extends ChangeNotifier {
   String _responseText = "";
   bool _isLoading = false;
@@ -20,6 +22,10 @@ class AppData extends ChangeNotifier {
   IOClient? _ioClient;
   HttpClient? _httpClient;
   StreamSubscription<String>? _streamSubscription;
+  int? _selectedShapeIndex;
+
+  double canvasWidth = 0;
+  double canvasHeight = 0;
 
   final List<Drawable> drawables = [];
 
@@ -27,6 +33,11 @@ class AppData extends ChangeNotifier {
       _isInitial ? "..." : (_isLoading ? "Esperant ..." : _responseText);
 
   bool get isLoading => _isLoading;
+  int? get selectedShapeIndex => _selectedShapeIndex;
+  Drawable? get selectedShape =>
+      _selectedShapeIndex != null && _selectedShapeIndex! < drawables.length
+          ? drawables[_selectedShapeIndex!]
+          : null;
 
   AppData() {
     _httpClient = HttpClient();
@@ -42,6 +53,279 @@ class AppData extends ChangeNotifier {
   void addDrawable(Drawable drawable) {
     drawables.add(drawable);
     notifyListeners();
+  }
+
+  // Cuando se selecciona una forma se guarda el índice
+  // el dibujo de la selección se maneja en CanvasPainter llamando a drawSelected
+  void selectShape(int index) {
+    if (index >= 0 && index < drawables.length) {
+      _selectedShapeIndex = index;
+    }
+    notifyListeners();
+  }
+
+  void deselectShape() {
+    _selectedShapeIndex = null;
+    notifyListeners();
+  }
+
+  void deleteSelectedShape() {
+    if (_selectedShapeIndex != null && _selectedShapeIndex! < drawables.length) {
+      drawables.removeAt(_selectedShapeIndex!);
+      _selectedShapeIndex = null;
+      notifyListeners();
+    }
+  }
+
+  void updateShapeProperty(int index, String property, dynamic value) {
+    if (index >= 0 && index < drawables.length) {
+      final shape = drawables[index];
+      
+      if (shape is Circle) {
+        switch (property) {
+          case 'x':
+            drawables[index] = Circle(
+              center: Offset(parseDouble(value), shape.center.dy),
+              radius: shape.radius,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'y':
+            drawables[index] = Circle(
+              center: Offset(shape.center.dx, parseDouble(value)),
+              radius: shape.radius,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'radius':
+            drawables[index] = Circle(
+              center: shape.center,
+              radius: parseDouble(value),
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'color':
+            drawables[index] = Circle(
+              center: shape.center,
+              radius: shape.radius,
+              color: parseColor(value),
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'strokeWidth':
+            drawables[index] = Circle(
+              center: shape.center,
+              radius: shape.radius,
+              color: shape.color,
+              strokeWidth: parseDouble(value),
+              gradientColors: shape.gradientColors,
+            );
+            break;
+        }
+      } else if (shape is Rectangle) {
+        switch (property) {
+          case 'topLeftX':
+            drawables[index] = Rectangle(
+              topLeft: Offset(parseDouble(value), shape.topLeft.dy),
+              bottomRight: shape.bottomRight,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'topLeftY':
+            drawables[index] = Rectangle(
+              topLeft: Offset(shape.topLeft.dx, parseDouble(value)),
+              bottomRight: shape.bottomRight,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'bottomRightX':
+            drawables[index] = Rectangle(
+              topLeft: shape.topLeft,
+              bottomRight: Offset(parseDouble(value), shape.bottomRight.dy),
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'bottomRightY':
+            drawables[index] = Rectangle(
+              topLeft: shape.topLeft,
+              bottomRight: Offset(shape.bottomRight.dx, parseDouble(value)),
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'color':
+            drawables[index] = Rectangle(
+              topLeft: shape.topLeft,
+              bottomRight: shape.bottomRight,
+              color: parseColor(value),
+              strokeWidth: shape.strokeWidth,
+              gradientColors: shape.gradientColors,
+            );
+            break;
+          case 'strokeWidth':
+            drawables[index] = Rectangle(
+              topLeft: shape.topLeft,
+              bottomRight: shape.bottomRight,
+              color: shape.color,
+              strokeWidth: parseDouble(value),
+              gradientColors: shape.gradientColors,
+            );
+            break;
+        }
+      } else if (shape is Line) {
+        switch (property) {
+          case 'startX':
+            drawables[index] = Line(
+              start: Offset(parseDouble(value), shape.start.dy),
+              end: shape.end,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+            );
+            break;
+          case 'startY':
+            drawables[index] = Line(
+              start: Offset(shape.start.dx, parseDouble(value)),
+              end: shape.end,
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+            );
+            break;
+          case 'endX':
+            drawables[index] = Line(
+              start: shape.start,
+              end: Offset(parseDouble(value), shape.end.dy),
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+            );
+            break;
+          case 'endY':
+            drawables[index] = Line(
+              start: shape.start,
+              end: Offset(shape.end.dx, parseDouble(value)),
+              color: shape.color,
+              strokeWidth: shape.strokeWidth,
+            );
+            break;
+          case 'color':
+            drawables[index] = Line(
+              start: shape.start,
+              end: shape.end,
+              color: parseColor(value),
+              strokeWidth: shape.strokeWidth,
+            );
+            break;
+          case 'strokeWidth':
+            drawables[index] = Line(
+              start: shape.start,
+              end: shape.end,
+              color: shape.color,
+              strokeWidth: parseDouble(value),
+            );
+            break;
+        }
+      } else if (shape is TextElement) {
+        switch (property) {
+          case 'x':
+            drawables[index] = TextElement(
+              text: shape.text,
+              position: Offset(parseDouble(value), shape.position.dy),
+              color: shape.color,
+              fontSize: shape.fontSize,
+              fontWeight: shape.fontWeight,
+              fontStyle: shape.fontStyle,
+            );
+            break;
+          case 'y':
+            drawables[index] = TextElement(
+              text: shape.text,
+              position: Offset(shape.position.dx, parseDouble(value)),
+              color: shape.color,
+              fontSize: shape.fontSize,
+              fontWeight: shape.fontWeight,
+              fontStyle: shape.fontStyle,
+            );
+            break;
+          case 'color':
+            drawables[index] = TextElement(
+              text: shape.text,
+              position: shape.position,
+              color: parseColor(value),
+              fontSize: shape.fontSize,
+              fontWeight: shape.fontWeight,
+              fontStyle: shape.fontStyle,
+            );
+            break;
+          case 'fontSize':
+            drawables[index] = TextElement(
+              text: shape.text,
+              position: shape.position,
+              color: shape.color,
+              fontSize: parseDouble(value),
+              fontWeight: shape.fontWeight,
+              fontStyle: shape.fontStyle,
+            );
+            break;
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  bool isPointInShape(Offset point, Drawable shape) {
+    if (shape is Circle) {
+      final distance = (point - shape.center).distance;
+      return distance <= shape.radius;
+    } else if (shape is Rectangle) {
+      final rect = Rect.fromPoints(shape.topLeft, shape.bottomRight);
+      return rect.contains(point);
+    } else if (shape is Line) {
+      const threshold = 10.0;
+      final dist = _distancePointToLine(point, shape.start, shape.end);
+      return dist <= threshold;
+    } else if (shape is TextElement) {
+      const hitBoxSize = 20.0;
+      final dx = (point.dx - shape.position.dx).abs();
+      final dy = (point.dy - shape.position.dy).abs();
+      return dx <= hitBoxSize && dy <= hitBoxSize;
+    }
+    return false;
+  }
+
+  double _distancePointToLine(Offset point, Offset start, Offset end) {
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    if (dx == 0 && dy == 0) {
+      return (point - start).distance;
+    }
+    final t = ((point.dx - start.dx) * dx + (point.dy - start.dy) * dy) /
+        (dx * dx + dy * dy);
+    final t_clamped = t.clamp(0.0, 1.0);
+    final closest = Offset(start.dx + t_clamped * dx, start.dy + t_clamped * dy);
+    return (point - closest).distance;
+  }
+
+  void selectShapeAtPosition(Offset position) {
+    for (int i = drawables.length - 1; i >= 0; i--) {
+      if (isPointInShape(position, drawables[i])) {
+        selectShape(i);
+        return;
+      }
+    }
+    deselectShape();
   }
 
   Future<void> callStream({required String question}) async {
@@ -187,10 +471,14 @@ class AppData extends ChangeNotifier {
     _isInitial = false;
     setLoading(true);
 
+    // include canvas size info in system message
+    final sizeInfo = "Canvas size: width=${canvasWidth.toStringAsFixed(1)}, height=${canvasHeight.toStringAsFixed(1)}.";
+
     final body = {
       "model": functionCallingModel,
       "stream": false,
       "messages": [
+        {"role": "system", "content": sizeInfo},
         {"role": "user", "content": userPrompt}
       ],
       "tools": tools
@@ -281,6 +569,62 @@ class AppData extends ChangeNotifier {
     return Colors.black;
   }
 
+  List<Color> parseGradientColors(dynamic value) {
+    if (value is List) {
+      return value.map((color) => parseColor(color)).toList();
+    }
+    return [];
+  }
+
+  FontWeight parseFontWeight(dynamic value) {
+    if (value is String) {
+      switch (value.toLowerCase()) {
+        case 'bold':
+        case 'w700':
+          return FontWeight.bold;
+        case 'w600':
+        case 'semibold':
+          return FontWeight.w600;
+        case 'w500':
+        case 'medium':
+          return FontWeight.w500;
+        case 'w400':
+        case 'normal':
+        case 'regular':
+          return FontWeight.normal;
+        case 'w300':
+        case 'light':
+          return FontWeight.w300;
+        case 'w200':
+          return FontWeight.w200;
+        case 'w100':
+        case 'thin':
+          return FontWeight.w100;
+        case 'w800':
+          return FontWeight.w800;
+        case 'w900':
+          return FontWeight.w900;
+        default:
+          return FontWeight.normal;
+      }
+    }
+    return FontWeight.normal;
+  }
+
+  FontStyle parseFontStyle(dynamic value) {
+    if (value is String) {
+      switch (value.toLowerCase()) {
+        case 'italic':
+          return FontStyle.italic;
+        case 'normal':
+          return FontStyle.normal;
+        default:
+          return FontStyle.normal;
+      }
+    }
+    return FontStyle.normal;
+  }
+
   double _randomBetween(double min, double max) {
     return min + Random().nextDouble() * (max - min);
   }
@@ -308,11 +652,17 @@ class AppData extends ChangeNotifier {
             ? parseDouble(parameters['radius'])
             : 10.0;
         final color = parseColor(parameters['color']);
+        final strokeWidth = parameters['strokeWidth'] != null
+            ? parseDouble(parameters['strokeWidth'])
+            : 2.0;
+        final gradientColors = parseGradientColors(parameters['gradientColors']);
         addDrawable(
           Circle(
             center: Offset(dx, dy),
             radius: max(0.0, radius),
             color: color,
+            strokeWidth: strokeWidth,
+            gradientColors: gradientColors.isNotEmpty ? gradientColors : null,
           ),
         );
         break;
@@ -331,9 +681,12 @@ class AppData extends ChangeNotifier {
             ? parseDouble(parameters['endY'])
             : _randomBetween(10.0, 100.0);
         final color = parseColor(parameters['color']);
+        final strokeWidth = parameters['strokeWidth'] != null
+            ? parseDouble(parameters['strokeWidth'])
+            : 1.0;
         final start = Offset(startX, startY);
         final end = Offset(endX, endY);
-        addDrawable(Line(start: start, end: end, color: color));
+        addDrawable(Line(start: start, end: end, color: color, strokeWidth: strokeWidth));
         break;
 
       case 'draw_rectangle':
@@ -346,11 +699,47 @@ class AppData extends ChangeNotifier {
           final bottomRightX = parseDouble(parameters['bottomRightX']);
           final bottomRightY = parseDouble(parameters['bottomRightY']);
           final color = parseColor(parameters['color']);
+          final strokeWidth = parameters['strokeWidth'] != null
+              ? parseDouble(parameters['strokeWidth'])
+              : 2.0;
+          final gradientColors = parseGradientColors(parameters['gradientColors']);
           final topLeft = Offset(topLeftX, topLeftY);
           final bottomRight = Offset(bottomRightX, bottomRightY);
-          addDrawable(Rectangle(topLeft: topLeft, bottomRight: bottomRight, color: color));
+          addDrawable(Rectangle(
+            topLeft: topLeft,
+            bottomRight: bottomRight,
+            color: color,
+            strokeWidth: strokeWidth,
+            gradientColors: gradientColors.isNotEmpty ? gradientColors : null,
+          ));
         } else {
           print("Missing rectangle properties: $parameters");
+        }
+        break;
+
+      case 'draw_text':
+        if (parameters['x'] != null &&
+            parameters['y'] != null &&
+            parameters['text'] != null) {
+          final x = parseDouble(parameters['x']);
+          final y = parseDouble(parameters['y']);
+          final text = parameters['text'].toString();
+          final color = parseColor(parameters['color']);
+          final fontSize = parameters['fontSize'] != null
+              ? parseDouble(parameters['fontSize'])
+              : 14.0;
+          final fontWeight = parseFontWeight(parameters['fontWeight']);
+          final fontStyle = parseFontStyle(parameters['fontStyle']);
+          addDrawable(TextElement(
+            position: Offset(x, y),
+            text: text,
+            color: color,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            fontStyle: fontStyle,
+          ));
+        } else {
+          print("Missing text properties: $parameters");
         }
         break;
 
